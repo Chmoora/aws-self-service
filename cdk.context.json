@@ -1,0 +1,26 @@
+{
+  "ShareAccounts": [],
+  "TagOptions": {
+    "Portfolio": {
+      "Company": "Chmoora",
+      "Department": [
+        "Engineering",
+        "Finance",
+        "Marketing"
+      ],
+      "CostCenter": [
+        "1111",
+        "2222",
+        "3333",
+        "4444"
+      ]
+    },
+    "Product": {
+      "Environment": [
+        "dev",
+        "qa",
+        "prod"
+      ]
+    }
+  }
+}
