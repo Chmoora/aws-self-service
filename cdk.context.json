@@ -1,8 +1,19 @@
 {
-  "ShareAccounts": [],
+  "Parameters": {
+    "PortfolioName": "AWS Self-Service",
+    "Owner": "Chmoora",
+    "Provider": "CCoE",
+    "Distributor": "CCoE",
+    "Support": {
+      "Url": "https://aws.chmoora.net/support",
+      "Email": "aws-support@chmoora.net"
+    }
+  },
   "TagOptions": {
     "Portfolio": {
-      "Company": "Chmoora",
+      "Company": [
+        "Chmoora"
+      ],
       "Department": [
         "Engineering",
         "Finance",

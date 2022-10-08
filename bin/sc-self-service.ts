@@ -5,4 +5,6 @@ import { ScSelfServiceStack } from '../lib/sc-self-service-stack';
 
 const app = new cdk.App();
 
-new ScSelfServiceStack(app, 'ScSelfServiceStack', {});
+new ScSelfServiceStack(app, 'ScSelfServiceStack', {
+  terminationProtection: true
+});
