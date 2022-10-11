@@ -3,6 +3,7 @@ import { Construct } from 'constructs';
 import { ScProductBucket } from './sc-products-stack';
 import * as sc from 'aws-cdk-lib/aws-servicecatalog';
 import * as cr from 'aws-cdk-lib/custom-resources';
+import { Role } from 'aws-cdk-lib/aws-iam';
 
 export class ScSelfServiceStack extends cdk.Stack {
 
@@ -30,23 +31,41 @@ export class ScSelfServiceStack extends cdk.Stack {
         region: 'us-east-1',
         physicalResourceId: cr.PhysicalResourceId.of(Date.now().toString()),
       },
+      onDelete: {
+        service: 'Organizations',
+        action: 'describeOrganization',
+        region: 'us-east-1',
+        physicalResourceId: cr.PhysicalResourceId.of(Date.now().toString()),
+      },
       policy: cr.AwsCustomResourcePolicy.fromSdkCalls({
         resources: cr.AwsCustomResourcePolicy.ANY_RESOURCE,
       }),
     });
+
+    const orgNode = {
+      Type: 'ORGANIZATION',
+      Value: describeOrg.getResponseField('Organization.Id')
+    };
 
     // Custom resource to share Portfolio with Organization
     const createShare = new cr.AwsCustomResource(this, 'CreatePortfolioShare', {
       onUpdate: {
         service: 'ServiceCatalog',
         action: 'createPortfolioShare',
+        region: this.region,
         parameters: {
           PortfolioId: portfolio.portfolioId,
-          OrganizationNode: {
-            Type: 'ORGANIZATION',
-            Value: describeOrg.getResponseField('Organization.Id')
-          },
+          OrganizationNode: orgNode,
           ShareTagOptions: true
+        },
+        physicalResourceId: cr.PhysicalResourceId.of(Date.now().toString()),
+      },
+      onDelete: {
+        service: 'ServiceCatalog',
+        action: 'deletePortfolioShare',
+        parameters: {
+          PortfolioId: portfolio.portfolioId,
+          OrganizationNode: orgNode
         },
         physicalResourceId: cr.PhysicalResourceId.of(Date.now().toString()),
       },
@@ -54,6 +73,11 @@ export class ScSelfServiceStack extends cdk.Stack {
         resources: cr.AwsCustomResourcePolicy.ANY_RESOURCE,
       }),
     });
+
+    // Give access to list of IAM roles
+    for (const roleName of params.RoleAccess) {
+      portfolio.giveAccessToRole(Role.fromRoleName(this, `${roleName}Access`, roleName));
+    }
 
     // List of SC Products
     const products: sc.IProduct[] = [
@@ -76,9 +100,10 @@ export class ScSelfServiceStack extends cdk.Stack {
       })
     ]
 
-    // Add all Products to Portfolio
+    // Add all Products to Portfolio and add launch constrains
     for (const product of products) {
       portfolio.addProduct(product);
+      portfolio.setLocalLaunchRoleName(product, 'SC-Provisioner');
     }
 
   }

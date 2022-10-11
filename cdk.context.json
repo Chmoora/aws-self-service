@@ -1,13 +1,16 @@
 {
   "Parameters": {
-    "PortfolioName": "AWS Self-Service",
+    "PortfolioName": "CDK Self-Service",
     "Owner": "Chmoora",
     "Provider": "CCoE",
     "Distributor": "CCoE",
     "Support": {
       "Url": "https://aws.chmoora.net/support",
       "Email": "aws-support@chmoora.net"
-    }
+    },
+    "RoleAccess": [
+      "Developer"
+    ]
   },
   "TagOptions": {
     "Portfolio": {
