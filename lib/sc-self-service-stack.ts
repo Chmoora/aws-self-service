@@ -16,7 +16,7 @@ export class ScSelfServiceStack extends cdk.Stack {
     // SC Portfolio
     const portfolio = new sc.Portfolio(this, 'Portfolio1', {
       displayName: params.PortfolioName,
-      description: 'Compiant AWS resources',
+      description: 'Shared Products',
       providerName: params.Provider,
       tagOptions: new sc.TagOptions(this, 'TagOptionsPf', {
         allowedValuesForTags: tagOptions.Portfolio
@@ -129,7 +129,7 @@ export class ScSelfServiceStack extends cdk.Stack {
     // Add all Products to Portfolio and add launch constrains
     for (const product of products) {
       portfolio.addProduct(product);
-      portfolio.setLocalLaunchRoleName(product, 'SC-Provisioner');
+      portfolio.setLocalLaunchRoleName(product, params.Provisioning.RoleName);
     }
 
     // CF Outputs
