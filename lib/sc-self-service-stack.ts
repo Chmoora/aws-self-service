@@ -3,7 +3,7 @@ import { Construct } from 'constructs';
 import { ScProductBucket } from './sc-products-stack';
 import * as sc from 'aws-cdk-lib/aws-servicecatalog';
 import * as cr from 'aws-cdk-lib/custom-resources';
-import { Role } from 'aws-cdk-lib/aws-iam';
+import { PolicyStatement, Role } from 'aws-cdk-lib/aws-iam';
 
 export class ScSelfServiceStack extends cdk.Stack {
 
@@ -24,7 +24,7 @@ export class ScSelfServiceStack extends cdk.Stack {
     });
 
     // Custom resource to get Organization ID
-    const describeOrg = new cr.AwsCustomResource(this, 'DescribeOrganization', {
+    const describeOrg = new cr.AwsCustomResource(this, 'OrganizationInfo', {
       onUpdate: {
         service: 'Organizations',
         action: 'describeOrganization',
@@ -48,10 +48,21 @@ export class ScSelfServiceStack extends cdk.Stack {
     };
 
     // Custom resource to share Portfolio with Organization
-    const createShare = new cr.AwsCustomResource(this, 'CreatePortfolioShare', {
-      onUpdate: {
+    const createShare = new cr.AwsCustomResource(this, 'PortfolioShare', {
+      onCreate: {
         service: 'ServiceCatalog',
         action: 'createPortfolioShare',
+        region: this.region,
+        parameters: {
+          PortfolioId: portfolio.portfolioId,
+          OrganizationNode: orgNode,
+          ShareTagOptions: true
+        },
+        physicalResourceId: cr.PhysicalResourceId.of(Date.now().toString()),
+      },
+      onUpdate: {
+        service: 'ServiceCatalog',
+        action: 'updatePortfolioShare',
         region: this.region,
         parameters: {
           PortfolioId: portfolio.portfolioId,
@@ -69,11 +80,26 @@ export class ScSelfServiceStack extends cdk.Stack {
         },
         physicalResourceId: cr.PhysicalResourceId.of(Date.now().toString()),
       },
-      policy: cr.AwsCustomResourcePolicy.fromSdkCalls({
-        resources: cr.AwsCustomResourcePolicy.ANY_RESOURCE,
-      }),
+      policy: cr.AwsCustomResourcePolicy.fromStatements([
+        // Grant access to portfolio sharing
+        new PolicyStatement({
+          actions: [ 'servicecatalog:*PortfolioShare*' ],
+          resources: [ portfolio.portfolioArn ]
+        }),
+        // Grant read access to Organization's objects
+        new PolicyStatement({
+          actions: [ 
+            'organizations:ListAccount*',
+            'organizations:ListChildren',
+            'organizations:ListOrganization*',
+            'organizations:DescribeAccount',
+            'organizations:DescribeOrganization*'
+          ],
+          resources: [ '*' ]
+        })
+      ])
     });
-
+    
     // Give access to list of IAM roles
     for (const roleName of params.RoleAccess) {
       portfolio.giveAccessToRole(Role.fromRoleName(this, `${roleName}Access`, roleName));
@@ -105,6 +131,10 @@ export class ScSelfServiceStack extends cdk.Stack {
       portfolio.addProduct(product);
       portfolio.setLocalLaunchRoleName(product, 'SC-Provisioner');
     }
+
+    // CF Outputs
+    new cdk.CfnOutput(this, 'PortfolioId', { value: portfolio.portfolioId });
+    new cdk.CfnOutput(this, 'OrganizationId', { value: describeOrg.getResponseField('Organization.Id') });
 
   }
 }
