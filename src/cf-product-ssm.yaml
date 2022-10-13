@@ -1,0 +1,72 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Custom SSM Parameters
+
+Metadata:
+
+  Chmoora::SelfService:
+
+    Product: Custom SSM Parameter
+    Author: Jakub Gaj, jakubgaj@chmoora.net
+    Version: 0.1.0
+    Updated: 2021-09-27
+
+  AWS::CloudFormation::Interface:
+    
+    ParameterGroups: 
+      - Label: 
+          default: "Parameter configuration"
+        Parameters: 
+          - Company
+          - Department
+          - Stage
+          - ParamName
+          - ParamValue
+
+    ParameterLabels: 
+      Company: 
+        default: Provide your Company name
+      Department: 
+        default: Select your Business Unit
+      Stage:
+        default: Select deployment stage
+      ParamName:
+        default: Provide name for new SSM parameter
+      ParamValue:
+        default: Provide value for new SSM parameter
+
+Parameters:
+
+  Company:
+    Type: String
+    Default: chmoora
+
+  Department:
+    Type: String
+    AllowedValues: [ eng, fin, mar ]
+
+  Stage:
+    Type: String
+    AllowedValues: [ dev, qa, prod ]
+
+  ParamName:
+    Type: String
+
+  ParamValue:
+    Type: String
+
+Resources:
+
+  StringParam1:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${Company}/${Department}/${Stage}/${ParamName}
+      Description: Custom SSM String Parameter
+      Type: String
+      Tier: Standard
+      Value: !Ref ParamValue
+
+Outputs:
+
+  StringParam1:
+    Description: SSM string parameter name
+    Value: !Ref StringParam1

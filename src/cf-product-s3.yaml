@@ -1,0 +1,88 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Custom S3 Bucket
+
+Metadata:
+
+  Chmoora::SelfService:
+
+    Product: Custom S3 Bucket
+    Author: Jakub Gaj, jakubgaj@chmoora.net
+    Version: 0.1.0
+    Updated: 2021-09-27
+
+  AWS::CloudFormation::Interface:
+    
+    ParameterGroups: 
+      - Label: 
+          default: "Bucket configuration"
+        Parameters:
+          - Company
+          - Department
+          - Stage
+          - DataClass
+          - BucketName
+
+    ParameterLabels: 
+      Company: 
+        default: Provide your Company name
+      Department: 
+        default: Select your Business Unit
+      Stage:
+        default: Select deployment stage
+      DataClass:
+        default: Select data classification
+      BucketName:
+        default: Provide name for new S3 bucket
+
+Parameters:
+
+  Company:
+    Type: String
+    Default: chmoora
+
+  Department:
+    Type: String
+    AllowedValues: [ eng, fin, mar ]
+
+  Stage:
+    Type: String
+    AllowedValues: [ dev, qa, prod ]
+
+  DataClass:
+    Type: String
+    AllowedValues: [ Private, Internal, Confidential ]
+
+  BucketName:
+    Type: String
+    AllowedPattern: '[a-z\-]+'
+    MinLength: 3
+    MaxLength: 20
+
+Resources:
+
+  Bucket1:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    Properties:
+      BucketName: !Sub ${Company}-${Department}-${BucketName}-${Stage}-${AWS::Region}-${AWS::AccountId}
+      AccessControl: Private
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+        - ServerSideEncryptionByDefault:
+            SSEAlgorithm: aws:kms
+      Tags:
+      - Key: DataClassification
+        Value: !Ref DataClass
+
+Outputs:
+
+  BucketName:
+    Description: Custom S3 bucket name
+    Value: !Ref Bucket1
